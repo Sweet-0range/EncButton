@@ -3,27 +3,38 @@
 void encoderTick(Encoder &e) {
     buttonTick(e.button);
 
-    // Инвертируем сигналы (active-low)
     int MSB = !digitalRead(e.pinRight);
     int LSB = !digitalRead(e.pinLeft);
 
     int encoded = (MSB << 1) | LSB;
     int sum = (e.lastEncoded << 2) | encoded;
 
-    unsigned long now = millis();
+    switch(sum) {
+        // clockwise
+        case 0b1101:
+        case 0b0100:
+        case 0b0010:
+        case 0b1011:
+            e.stepAccum++;
+            break;
 
-    // Проверка переходов с задержкой
-    if (now - e.rotateTimer >= ENCODER_DELAY) {
-        switch(sum) {
-            case 0b1101: case 0b0100: case 0b0010: case 0b1011:
-                e.right = true;
-                e.rotateTimer = now;  // обновляем таймер
-                break;
-            case 0b1110: case 0b0111: case 0b0001: case 0b1000:
-                e.left = true;
-                e.rotateTimer = now;  // обновляем таймер
-                break;
-        }
+        // counter-clockwise
+        case 0b1110:
+        case 0b0111:
+        case 0b0001:
+        case 0b1000:
+            e.stepAccum--;
+            break;
+    }
+
+    // 1 щелчок = 4 перехода
+    if (e.stepAccum >= 4) {
+        e.right = true;
+        e.stepAccum = 0;
+    }
+    else if (e.stepAccum <= -4) {
+        e.left = true;
+        e.stepAccum = 0;
     }
 
     e.lastEncoded = encoded;
