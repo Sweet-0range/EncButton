@@ -14,6 +14,7 @@ struct Encoder {
     bool left;
     bool right;
     unsigned long rotateTimer;
+    int stepAccum;
 };
 
 void encoderTick(Encoder &e);
